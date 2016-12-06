@@ -1,0 +1,11 @@
+{
+  "name": "cyclebot",
+  "dependencies": {
+    "ms": "registry:npm/ms#0.1.0+20160723033700",
+    "ramda": "registry:npm/ramda#0.21.0+20160531162943"
+  },
+  "globalDependencies": {
+    "node": "registry:env/node#6.0.0+20160902022231",
+    "ws": "registry:dt/ws#0.0.0+20161003184106"
+  }
+}
