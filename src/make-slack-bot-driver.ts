@@ -107,15 +107,6 @@ export function makeSlackBotDriver(token: string, {pingInterval = ms('10s'), pin
                         try {
                             const event = JSON.parse(jsonLikeString);
 
-                            /**
-                             *
-                             *
-                             *
-                             *
-                             *
-                             */
-                            console.log(event);
-
                             if (contains(event.type, [undefined, 'reconnect_url', 'desktop_notification', 'hello']) || event.reply_to) {
                                 return empty();
                             }
@@ -134,7 +125,6 @@ export function makeSlackBotDriver(token: string, {pingInterval = ms('10s'), pin
             .subscribe(([outgoing, {socket}]) => {
                 const {text, channel} = outgoing;
                 id += 1;
-                console.log(outgoing)
                 socket.send(JSON.stringify({
                     id,
                     type: 'message',
