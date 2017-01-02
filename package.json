@@ -11,11 +11,12 @@
   },
   "dependencies": {
     "ramda": "^0.22.1",
-    "rxjs": "5.0.0-rc.1",
+    "rxjs": "^5.0.2",
     "ws": "^1.1.1"
   },
   "devDependencies": {
-    "typescript": "^2.0.10",
+    "@types/ramda": "^0.0.2",
+    "typescript": "^2.1.4",
     "typings": "^2.0.0"
   },
   "homepage": "https://github.com/hiroqn/cyclebot#readme",

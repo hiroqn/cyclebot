@@ -18,7 +18,7 @@ export const isChannel = where({
     creator: is(String)
 });
 
-const channelKeyList = [
+const channelKeyList: Array<keyof Channel> = [
     'id',
     'name',
     'is_member',
