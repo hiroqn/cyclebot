@@ -35,7 +35,9 @@ function makeMessageAction(event: any & SlackLikeEvent): Action {
                 return (state) => {
                     return assoc('event', {
                         user: state.users.find(u => u.id === user),
+                        user_id: user,
                         channel: state.ims.find(im => im.id === channel),
+                        channel_id: channel,
                         text,
                         ts
                     }, state)
@@ -44,7 +46,9 @@ function makeMessageAction(event: any & SlackLikeEvent): Action {
                 return (state) => {
                     return assoc('event', {
                         user: state.users.find(u => u.id === user),
+                        user_id: user,
                         channel: state.channels.find(ch => ch.id === channel),
+                        channel_id: channel,
                         text,
                         ts
                     }, state)
@@ -190,7 +194,7 @@ function makeStatusAction(event: any): Action {
     }
 }
 
-export function parser(slackEvent: any & SlackLikeEvent): Action {
+export function parser(slackEvent: any): Action {
     if (slackEvent.type === 'message') {
         return makeMessageAction(slackEvent);
     } else {

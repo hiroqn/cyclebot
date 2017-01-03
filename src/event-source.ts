@@ -12,10 +12,20 @@ export class EventSource {
 
     private _message$: O<{event: IncomingMessage}>;
 
-    constructor(_status$: O<Status>) {
+    constructor(_status$: Observable<Status>) {
         const [, message$] = _status$.partition(status => typeof status.event === 'string');
 
         this._message$ = message$ as O<{event: IncomingMessage}>;
+    }
+
+    selectByChannelName(name: string) {
+        return this._message$.mergeMap(({event}) => {
+            if ((event.channel as Channel).name === name && !event.user.is_bot) {
+                return of(event);
+            } else {
+                return empty();
+            }
+        });
     }
 
     selectByName(_name: string) {
@@ -24,7 +34,6 @@ export class EventSource {
             case '#':
                 return this._message$
                     .mergeMap(({event}) => {
-                    //TODO DMの処理
                         if ((event.channel as Channel).name === name && !event.user.is_bot) {
                             return of(event);
 
@@ -43,7 +52,7 @@ export class EventSource {
                         }
                     });
             default:
-                return empty()
+                return empty();
         }
     }
 }

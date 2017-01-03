@@ -4,13 +4,16 @@ import {InstantMessage} from './ims';
 
 export type IncomingMessage = {
     channel: Channel | InstantMessage;
+    channel_id: string;
     user: User;
+    user_id: string;
     text: string;
     ts: string;
 };
 
 export type OutgoingMessage = {
-    channel: string;
+    channel?: string;
+    name?: string;
     text: string;
 }
 

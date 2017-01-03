@@ -14,7 +14,7 @@ export const isInstantMessage = where({
     created: is(Number)
 });
 
-const imKeyList = [
+const imKeyList: Array<keyof InstantMessage> = [
     'id',
     'user',
     'is_open',

@@ -10,14 +10,14 @@ import {fetchSlackApi} from './fetch-slack-api';
 import {parser as apiParser, Response} from './parser/api-rtm-starts-parser';
 import {parser as eventParser} from './parser/slack-event-parser';
 import {EventSource} from './event-source';
-import {Status, Action} from './state/status';
+import {Status, Action, findIdByName} from './state/status';
 import {empty} from 'rxjs/observable/empty';
 import {contains} from 'ramda';
 import {OutgoingMessage, IncomingMessage} from './state/message';
 
 type O<T> = Observable<T>;
 
-type makeBotDriverOptions = {
+export type makeBotDriverOptions = {
     pingInterval?: number;
     pingRetryLimit?: number;
 }
@@ -30,7 +30,7 @@ export type Connection = {
 export function reply(message: IncomingMessage, text: string): OutgoingMessage {
     return {
         text,
-        channel: message.channel.id
+        channel: message.channel_id
     }
 }
 
@@ -122,15 +122,35 @@ export function makeSlackBotDriver(token: string, {pingInterval = ms('10s'), pin
         let id = 0;
 
         out$.withLatestFrom(status$)
-            .subscribe(([outgoing, {socket}]) => {
-                const {text, channel} = outgoing;
+            .subscribe(([outgoing, {status, socket}]) => {
                 id += 1;
-                socket.send(JSON.stringify({
-                    id,
-                    type: 'message',
-                    channel: channel,
-                    text: `${text}`
-                }));
+
+                if (outgoing.channel) {
+                    const {text, channel} = outgoing;
+                    socket.send(JSON.stringify({
+                        id,
+                        type: 'message',
+                        channel: channel,
+                        text: `${text}`
+                    }));
+                }
+
+                if (outgoing.name) {
+                    const {text, name} = outgoing;
+                    if (!name) {
+                        return;
+                    }
+                    const id = findIdByName(status, name);
+                    if (!id) {
+                        return;
+                    }
+                    socket.send(JSON.stringify({
+                        id,
+                        type: 'message',
+                        channel: id,
+                        text: `${text}`
+                    }));
+                }
             });
 
         return new EventSource(status$.map(({status}) => status));
