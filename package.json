@@ -19,6 +19,10 @@
     "typescript": "^2.1.4",
     "typings": "^2.0.0"
   },
+  "files": [
+    "src",
+    "lib"
+  ],
   "homepage": "https://github.com/hiroqn/cyclebot#readme",
   "license": "MIT",
   "main": "lib/index.js",
