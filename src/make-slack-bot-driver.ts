@@ -1,19 +1,27 @@
 import * as ms from 'ms';
 import * as WebSocket from 'ws';
+import {contains} from 'ramda';
+/**
+ * rxjs
+ */
 import {Observable, Timestamp, Scheduler, Subscriber} from 'rxjs';
 import {of} from 'rxjs/observable/of';
 import {zip} from 'rxjs/observable/zip';
 import {range} from 'rxjs/observable/range';
 import {fromEvent} from 'rxjs/observable/fromEvent';
 import {interval} from 'rxjs/observable/interval';
+import {empty} from 'rxjs/observable/empty';
+
+/**
+ * local
+ */
 import {fetchSlackApi} from './fetch-slack-api';
 import {parser as apiParser, Response} from './parser/api-rtm-starts-parser';
 import {parser as eventParser} from './parser/slack-event-parser';
 import {EventSource} from './event-source';
 import {Status, Action, findIdByName} from './state/status';
-import {empty} from 'rxjs/observable/empty';
-import {contains} from 'ramda';
 import {OutgoingMessage, IncomingMessage} from './state/message';
+import {merge} from "rxjs/observable/merge";
 
 type O<T> = Observable<T>;
 
@@ -34,7 +42,9 @@ export function reply(message: IncomingMessage, text: string): OutgoingMessage {
     }
 }
 
-export function makeSlackBotDriver(token: string, {pingInterval = ms('10s'), pingRetryLimit = 2}: makeBotDriverOptions) {
+export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions) {
+
+    const {pingInterval = ms('10s'), pingRetryLimit = 2} = options || {};
 
     function connectSocket(status: Response): O<Connection> {
         return new Observable<Connection>((observer: Subscriber<Connection>) => {
@@ -48,12 +58,13 @@ export function makeSlackBotDriver(token: string, {pingInterval = ms('10s'), pin
             const pong$: O<Timestamp<{}>> = fromEvent(socket, 'pong')
                 .timestamp();
 
-            const subscription = ping$.withLatestFrom(pong$, (ping, pong) => ping.timestamp - pong.timestamp)
+            const pingOutput$ = ping$.mapTo(() => socket.ping(null, {}, true));
+            const pongOutput$ = fromEvent(socket, 'ping').mapTo(() => socket.pong());
+            const terminateOutput$ = ping$.withLatestFrom(pong$, (ping, pong) => ping.timestamp - pong.timestamp)
                 .filter(diff => diff > pingInterval * (pingRetryLimit - 0.5))
-                .take(1)
-                .subscribe(() => socket.terminate())
-                .add(ping$.subscribe(() => socket.ping(null, {}, true)))
-                .add(fromEvent(socket, 'ping').subscribe(() => socket.pong()));
+                .mapTo(() => socket.terminate()).take(1);
+
+            const subscription = merge(pingOutput$, pongOutput$, terminateOutput$).subscribe(f => f());
 
             socket
                 .on('open', () => observer.next({
