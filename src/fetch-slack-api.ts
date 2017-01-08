@@ -1,6 +1,5 @@
 import {request} from 'https';
 import * as querystring from 'querystring';
-
 import {ClientRequest, IncomingMessage} from 'http';
 import {Observable, Subscriber} from 'rxjs';
 
