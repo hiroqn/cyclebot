@@ -15,7 +15,7 @@
     "ws": "^1.1.1"
   },
   "devDependencies": {
-    "@types/ramda": "^0.0.2",
+    "@types/ramda": "ts2.1",
     "typescript": "^2.1.4",
     "typings": "^2.0.0"
   },

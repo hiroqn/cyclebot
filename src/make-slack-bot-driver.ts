@@ -19,9 +19,9 @@ import {fetchSlackApi} from './fetch-slack-api';
 import {parser as apiParser, Response} from './parser/api-rtm-starts-parser';
 import {parser as eventParser} from './parser/slack-event-parser';
 import {EventSource} from './event-source';
-import {Status, Action, findIdByName} from './state/status';
-import {OutgoingMessage, IncomingMessage} from './state/message';
+import {Status, Action, findIdByName, fromResponse} from './state/status';
 import {merge} from "rxjs/observable/merge";
+import {Request} from "./request";
 
 type O<T> = Observable<T>;
 
@@ -35,10 +35,29 @@ export type Connection = {
     status: Status
 }
 
-export function reply(message: IncomingMessage, text: string): OutgoingMessage {
-    return {
-        text,
-        channel: message.channel_id
+function send(id: number, request: Request, {socket, status}: Connection) {
+
+    switch (request.type) {
+        case  'message-by-id':
+            socket.send(JSON.stringify({
+                id,
+                type: 'message',
+                channel: request.id,
+                text: `${request.text}`
+            }));
+            return;
+        case  'message-by-name':
+            const userId = findIdByName(name, status);
+            if (userId) {
+
+                socket.send(JSON.stringify({
+                    id,
+                    type: 'message',
+                    channel: userId,
+                    text: `${request.text}`
+                }));
+            }
+            return;
     }
 }
 
@@ -69,12 +88,7 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
             socket
                 .on('open', () => observer.next({
                     socket,
-                    status: {
-                        users: status.users,
-                        channels: status.channels,
-                        ims: status.ims,
-                        event: 'hello'
-                    }
+                    status: fromResponse(status)
                 }))
                 .on('error', (error: any) => observer.error(error))
                 .on('close', () => observer.complete());
@@ -101,7 +115,7 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
             });
     }
 
-    return function botDriver(out$: O<OutgoingMessage>) {
+    return function botDriver(out$: O<Request>) {
 
         const params = {
             simple_latest: true,
@@ -132,36 +146,10 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
 
         let id = 0;
 
-        out$.withLatestFrom(status$)
-            .subscribe(([outgoing, {status, socket}]) => {
+        out$.withLatestFrom(status$)        //TODO subscription handling
+            .subscribe(([outgoing, conn]) => {
                 id += 1;
-
-                if (outgoing.channel) {
-                    const {text, channel} = outgoing;
-                    socket.send(JSON.stringify({
-                        id,
-                        type: 'message',
-                        channel: channel,
-                        text: `${text}`
-                    }));
-                }
-
-                if (outgoing.name) {
-                    const {text, name} = outgoing;
-                    if (!name) {
-                        return;
-                    }
-                    const id = findIdByName(status, name);
-                    if (!id) {
-                        return;
-                    }
-                    socket.send(JSON.stringify({
-                        id,
-                        type: 'message',
-                        channel: id,
-                        text: `${text}`
-                    }));
-                }
+                send(id, outgoing, conn);
             });
 
         return new EventSource(status$.map(({status}) => status));

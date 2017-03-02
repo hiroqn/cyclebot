@@ -1,1 +1,2 @@
-export {makeSlackBotDriver, reply} from './make-slack-bot-driver'
+export {makeSlackBotDriver} from './make-slack-bot-driver';
+export {requestMessageById, requestMessageByName} from './request';

@@ -1,13 +1,6 @@
 import {
-    ifElse,
     identity,
-    propEq,
-    lensProp,
-    over,
-    append,
     merge,
-    map,
-    reject,
     where,
     is,
     both,
@@ -15,40 +8,51 @@ import {
     pipe,
     assoc
 } from 'ramda';
-import {Action} from '../state/status';
+import {Action, createChannel, updateChannel, deleteChannel, updateUser} from '../state/status';
 import {channelArchived, channelUnarchived, channelJoined, channelLeft} from '../state/channel';
 import {isArray} from 'rxjs/util/isArray';
+import {findByKey} from "../util/map";
 
 type SlackLikeEvent = {
     type: string;
     subtype?: string;
 }
 
-function makeMessageAction(event: any & SlackLikeEvent): Action {
+function makeMessageAction(event: any & SlackLikeEvent): Action {// TODO i dont know this type declare is correct....
 
     if (!event.subtype) {
 
-        const {text, user, channel, ts} = event;
+        const {text, user: user_id, channel: channel_id, ts} = event;
 
-        switch (channel.charAt(0)) {
+        switch (channel_id.charAt(0)) {
             case 'D':
                 return (state) => {
+                    const user = findByKey(user_id, state.users);
+                    const channel = findByKey(channel_id, state.ims);
+                    if (!user || !channel) {
+                        return assoc('event', 'noop', state)
+                    }
                     return assoc('event', {
-                        user: state.users.find(u => u.id === user),
-                        user_id: user,
-                        channel: state.ims.find(im => im.id === channel),
-                        channel_id: channel,
+                        user,
+                        user_id,
+                        channel,
+                        channel_id,
                         text,
                         ts
-                    }, state)
+                    }, state);
                 };
             case 'C':
                 return (state) => {
+                    const user = findByKey(user_id, state.users);
+                    const channel = findByKey(channel_id, state.channels);
+                    if (!user || !channel) {
+                        return assoc('event', 'noop', state)
+                    }
                     return assoc('event', {
-                        user: state.users.find(u => u.id === user),
-                        user_id: user,
-                        channel: state.channels.find(ch => ch.id === channel),
-                        channel_id: channel,
+                        user,
+                        user_id,
+                        channel,
+                        channel_id,
                         text,
                         ts
                     }, state)
@@ -162,33 +166,40 @@ function makeStatusAction(event: any): Action {
 
     switch (event.type) {
         case 'channel_created':
-            return isChannelCreated(event) ? over(lensProp('channels'), append(merge({
-                is_member: false,
-                is_archived: false
-            }, event.channel))) : identity;
+            return isChannelCreated(event) ?
+                createChannel(merge({is_member: false, is_archived: false}, event.channel)) :
+                identity;
 
         case 'channel_archive':
             return isChannelArchived(event) ?
-                over(lensProp('channels'), map(ifElse(propEq('id', event.channel), channelArchived, identity))) : identity;
+                updateChannel(event.channel, channelArchived) :
+                identity;
 
         case 'channel_unarchive':
             return isChannelArchived(event) ?
-                over(lensProp('channels'), map(ifElse(propEq('id', event.channel), channelUnarchived, identity))) : identity;
+                updateChannel(event.channel, channelUnarchived) :
+                identity;
 
         case 'channel_deleted':
-            return isChannelDeleted(event) ? over(lensProp('channels'), reject(propEq('id', event.channel))) : identity;
+            return isChannelDeleted(event) ?
+                deleteChannel(event.channel) :
+                identity;
 
         case 'channel_joined':
             return isChannelJoined(event) ?
-                over(lensProp('channels'), map(ifElse(propEq('id', event.channel.id), channelJoined, identity))) : identity;
+                updateChannel(event.channel.id, channelJoined) :
+                identity;
 
         case 'channel_left':
             return isChannelLeft(event) ?
-                over(lensProp('channels'), map(ifElse(propEq('id', event.channel), channelLeft, identity))) : identity;
+                updateChannel(event.channel, channelLeft) :
+                identity;
 
         case 'presence_change':
             return isPresenceChange(event) ?
-                over(lensProp('users'), map(ifElse(propEq('id', event.user), assoc('presence', event.presence), identity))) : identity;
+                updateUser(event.user, assoc('presence', event.presence)) :
+                identity;
+
         default:
             return identity;
     }

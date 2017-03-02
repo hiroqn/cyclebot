@@ -1,21 +1,17 @@
-import {Channel} from './channel';
 import {User} from './user';
-import {InstantMessage} from './ims';
 
-export type IncomingMessage = {
-    channel: Channel | InstantMessage;
+export type ChannelLike = {
+    id: string;
+}
+
+export type IncomingMessage<T extends ChannelLike> = {
+    channel: T;
     channel_id: string;
     user: User;
     user_id: string;
     text: string;
     ts: string;
 };
-
-export type OutgoingMessage = {
-    channel?: string;
-    name?: string;
-    text: string;
-}
 
 export type MessageChanged = {
     message: {
