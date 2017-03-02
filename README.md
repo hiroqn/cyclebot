@@ -5,12 +5,13 @@
 ```js
 
 const {run} = require('@cycle/rxjs-run');
-const {makeSlackBotDriver, reply} = require('cyclebot');
+const {makeSlackBotDriver, requestMessageById} = require('cyclebot');
 
 run(({Bot}) => {
-  return {
-    Bot: Bot.selectByName('#bot').map(message => reply(message, message.text))
-  }
+    return {
+        Bot: Bot.selectByChannelName('bot').map(message => 
+             requestMessageById(message.channel_id, message.text))
+    }
 }, {
   Bot: makeSlackBotDriver(`${process.env.SLACK_TOKEN}`, {})
 });
