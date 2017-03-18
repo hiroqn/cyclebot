@@ -11,6 +11,8 @@ import {range} from 'rxjs/observable/range';
 import {fromEvent} from 'rxjs/observable/fromEvent';
 import {interval} from 'rxjs/observable/interval';
 import {empty} from 'rxjs/observable/empty';
+import {merge} from "rxjs/observable/merge";
+import {from} from "rxjs/observable/from";
 
 /**
  * local
@@ -20,7 +22,6 @@ import {parser as apiParser, Response} from './parser/api-rtm-starts-parser';
 import {parser as eventParser} from './parser/slack-event-parser';
 import {EventSource} from './event-source';
 import {Status, Action, findIdByName, fromResponse} from './state/status';
-import {merge} from "rxjs/observable/merge";
 import {Request} from "./request";
 
 type O<T> = Observable<T>;
@@ -115,8 +116,8 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
             });
     }
 
-    return function botDriver(out$: O<Request>) {
-
+    return function botDriver(xout$: O<Request>) {
+        const out$ = from(xout$);
         const params = {
             simple_latest: true,
             no_unreads: true,
