@@ -32,7 +32,7 @@ export function del<T>(key: string, m: Map<T>): Map<T> {
     if (m[key] === undefined) {
         return m;
     }
-    return dissoc(key, m);
+    return dissoc<Map<T>>(key, m);
 }
 
 export function findByKey<T>(key: string, m: Map<T>): T | undefined {
