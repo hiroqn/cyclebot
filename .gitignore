@@ -1,6 +1,5 @@
 node_modules
 build
-typings
 lib
 src/**/*.js
 example
