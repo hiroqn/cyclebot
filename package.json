@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@types/ms": "^0.7.30",
+    "@types/node": "^8.0.44",
     "@types/ramda": "ts2.1",
     "@types/ws": "^3.2.0",
     "typescript": "^2.1.4"
