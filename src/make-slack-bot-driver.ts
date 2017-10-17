@@ -1,4 +1,4 @@
-import * as ms from 'ms';
+import ms = require('ms');
 import * as WebSocket from 'ws';
 import {contains} from 'ramda';
 /**
@@ -78,7 +78,7 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
             const pong$: O<Timestamp<{}>> = fromEvent(socket, 'pong')
                 .timestamp();
 
-            const pingOutput$ = ping$.mapTo(() => socket.ping(null, {}, true));
+            const pingOutput$ = ping$.mapTo(() => socket.ping(null, true, true));
             const pongOutput$ = fromEvent(socket, 'ping').mapTo(() => socket.pong());
             const terminateOutput$ = ping$.withLatestFrom(pong$, (ping, pong) => ping.timestamp - pong.timestamp)
                 .filter(diff => diff > pingInterval * (pingRetryLimit - 0.5))
