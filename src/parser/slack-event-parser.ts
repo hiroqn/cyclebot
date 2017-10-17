@@ -8,7 +8,7 @@ import {
     pipe,
     assoc
 } from 'ramda';
-import {Action, createChannel, updateChannel, deleteChannel, updateUser} from '../state/status';
+import {Action, EventLike, createChannel, updateChannel, deleteChannel, updateUser} from '../state/status';
 import {channelArchived, channelUnarchived, channelJoined, channelLeft} from '../state/channel';
 import {isArray} from 'rxjs/util/isArray';
 import {findByKey} from "../util/map";
@@ -18,7 +18,7 @@ type SlackLikeEvent = {
     subtype?: string;
 }
 
-function makeMessageAction(event: any & SlackLikeEvent): Action {// TODO i dont know this type declare is correct....
+function makeMessageAction(event: any & SlackLikeEvent): Action<EventLike> {// TODO i dont know this type declare is correct....
 
     if (!event.subtype) {
 
@@ -162,7 +162,7 @@ const isPresenceChange = where({
     user: is(String)
 }) as (e: any) => e is PresenceChangeEvent;
 
-function makeStatusAction(event: any): Action {
+function makeStatusAction(event: any): Action<EventLike> {
 
     switch (event.type) {
         case 'channel_created':
@@ -205,10 +205,10 @@ function makeStatusAction(event: any): Action {
     }
 }
 
-export function parser(slackEvent: any): Action {
+export function parser(slackEvent: any): Action<EventLike> {
     if (slackEvent.type === 'message') {
         return makeMessageAction(slackEvent);
     } else {
-        return pipe((assoc('event', slackEvent.type) as Action), makeStatusAction(slackEvent));
+        return pipe((assoc('event', slackEvent.type)), makeStatusAction(slackEvent));
     }
 }

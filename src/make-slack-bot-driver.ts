@@ -21,7 +21,7 @@ import {fetchSlackApi} from './fetch-slack-api';
 import {parser as apiParser, Response} from './parser/api-rtm-starts-parser';
 import {parser as eventParser} from './parser/slack-event-parser';
 import {EventSource} from './event-source';
-import {Status, Action, findIdByName, fromResponse} from './state/status';
+import {AnyStatus, EventLike, Action, findIdByName, fromResponse} from './state/status';
 import {Request} from "./request";
 
 type O<T> = Observable<T>;
@@ -33,7 +33,7 @@ export type makeBotDriverOptions = {
 
 export type Connection = {
     socket: WebSocket,
-    status: Status
+    status: AnyStatus
 }
 
 function send(id: number, request: Request, {socket, status}: Connection) {
@@ -129,7 +129,7 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
         const status$ = response$.switchMap(connectSocket)
             .switchMap(({socket, status}) =>
                 (<O<string>>fromEvent(socket, 'message'))
-                    .mergeMap((jsonLikeString: string): O<Action> => {
+                    .mergeMap((jsonLikeString: string): O<Action<EventLike>> => {
                         try {
                             const event = JSON.parse(jsonLikeString);
 
@@ -143,7 +143,7 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
                         }
                     })
                     .scan((state, action) => action(state), status)
-                    .map((status: Status) => ({status, socket}))).share();
+                    .map((status: AnyStatus) => ({status, socket}))).share();
 
         let id = 0;
 
