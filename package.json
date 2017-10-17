@@ -20,7 +20,7 @@
     "@types/node": "^8.0.44",
     "@types/ramda": "ts2.1",
     "@types/ws": "^3.2.0",
-    "typescript": "^2.1.4"
+    "typescript": "^2.5.2"
   },
   "files": [
     "src",
