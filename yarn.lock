@@ -6,9 +6,9 @@
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/@types/ramda/-/ramda-0.0.2.tgz#04e9b560b118eaf48542945ef9b2701c3f9832e3"
 
-ms@^0.7.3:
-  version "0.7.3"
-  resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.3.tgz#708155a5e44e33f5fd0fc53e81d0d40a91be1fff"
+ms@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
 
 options@>=0.0.5:
   version "0.0.6"
