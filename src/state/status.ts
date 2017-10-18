@@ -53,7 +53,7 @@ export function updateChannel(key: string, project: (x: Channel) => Channel): Ac
 }
 
 export function deleteChannel(key: string): Action {
-    return curryDel(key);
+    return over(lensProp('channels'), curryDel(key));
 }
 
 export function updateUser(key: string, project: (x: User) => User): Action {

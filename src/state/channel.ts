@@ -1,4 +1,4 @@
-import {where, is, pick, assoc} from 'ramda';
+import {pick, assoc} from 'ramda';
 
 export type Channel = {
     id: string;
@@ -9,14 +9,16 @@ export type Channel = {
     creator: string;
 }
 
-export const isChannel = where({
-    id: is(String),
-    name: is(String),
-    is_member: is(Boolean),
-    is_archived: is(Boolean),
-    created: is(Number),
-    creator: is(String)
-});
+export function isChannel(x: any): x is Channel {
+    return typeof x === 'object' &&
+        x !== null &&
+        typeof x.id === 'string' &&
+        typeof x.name === 'string' &&
+        typeof x.is_member === 'boolean' &&
+        typeof x.is_archived === 'boolean' &&
+        typeof x.created === 'number' &&
+        typeof x.creator === 'string';
+};
 
 const channelKeyList: Array<keyof Channel> = [
     'id',

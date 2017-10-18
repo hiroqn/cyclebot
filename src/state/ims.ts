@@ -1,4 +1,4 @@
-import {where, is, pick} from 'ramda';
+import {pick} from 'ramda';
 
 export type InstantMessage = {
     id: string;
@@ -7,12 +7,14 @@ export type InstantMessage = {
     created: number;
 }
 
-export const isInstantMessage = where({
-    id: is(String),
-    user: is(String),
-    is_open: is(Boolean),
-    created: is(Number)
-});
+export function isInstantMessage(x: any): x is InstantMessage {
+    return typeof x === 'object' &&
+        x !== null &&
+        typeof x.id === 'string' &&
+        typeof x.user === 'string' &&
+        typeof x.is_open === 'boolean' &&
+        typeof x.created === 'number';
+};
 
 const imKeyList: Array<keyof InstantMessage> = [
     'id',
