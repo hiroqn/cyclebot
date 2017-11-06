@@ -6,6 +6,7 @@ import {IncomingMessage} from './state/message';
 import {Channel, isChannel} from './state/channel';
 import {InstantMessage, isInstantMessage} from './state/ims';
 import {findOne} from './util/map'
+import {GroupedObservable} from 'rxjs/operator/groupBy';
 type O<T> = Observable<T>;
 type NonStringStatus = Status<IncomingMessage<Channel> | IncomingMessage<InstantMessage>>;
 type ChanStatus = Status<IncomingMessage<Channel>>;
@@ -19,6 +20,13 @@ export class EventSource {
         const message$ = _status$.filter((status: AnyStatus): status is NonStringStatus => typeof status.event !== 'string');
 
         this._message$ = message$;
+    }
+
+    groupByChannel(): Observable<GroupedObservable<string, IncomingMessage<Channel>>> {
+        return this._message$
+            .filter<NonStringStatus, ChanStatus>((ps: NonStringStatus): ps is ChanStatus => isChannel(ps.event.channel))
+            .map(x => x.event)
+            .groupBy((x: IncomingMessage<Channel>) => x.channel_id)
     }
 
     selectByChannelName(name: string): Observable<IncomingMessage<Channel>> {
