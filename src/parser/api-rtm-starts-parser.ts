@@ -1,8 +1,8 @@
 import {where, ifElse, is, both, all, pick, pipe, over, lensProp, map} from 'ramda';
 import {isArray} from 'rxjs/util/isArray';
-import {Channel, isChannel, makeChannel} from '../state/channel';
-import {isUser, User, makeUser} from '../state/user';
-import {InstantMessage, makeInstantMessage, isInstantMessage} from '../state/ims';
+import {Channel, isChannel, makeChannel} from '../channel';
+import {isUser, User, makeUser} from '../user';
+import {InstantMessage, makeInstantMessage, isInstantMessage} from '../instant-message';
 
 export type Response = {
     url: string;

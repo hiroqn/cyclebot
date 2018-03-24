@@ -1,4 +1,4 @@
-import {pick, assoc} from 'ramda';
+import {pick} from 'ramda';
 
 export type Channel = {
     id: string;
@@ -30,9 +30,3 @@ const channelKeyList: Array<keyof Channel> = [
 ];
 
 export const makeChannel = pick(channelKeyList);
-
-export const channelArchived = assoc('is_archived', true);
-export const channelUnarchived = assoc('is_archived', false);
-
-export const channelJoined = assoc('is_member', true);
-export const channelLeft = assoc('is_member', false);

@@ -1,6 +1,7 @@
 import ms = require('ms');
 import * as WebSocket from 'ws';
-import {contains} from 'ramda';
+import {always, contains} from 'ramda';
+import {Endo} from 'jazz-func/endo';
 /**
  * rxjs
  */
@@ -19,12 +20,16 @@ import {from} from "rxjs/observable/from";
  */
 import {fetchSlackApi} from './fetch-slack-api';
 import {parser as apiParser, Response} from './parser/api-rtm-starts-parser';
-import {parser as eventParser} from './parser/slack-event-parser';
-import {EventSource} from './event-source';
-import {AnyStatus, EventLike, Action, findIdByName, fromResponse} from './state/status';
+import {Event} from './event';
 import {Request} from "./request";
+import {Environment, makeEnvironmentAction, fromResponse, findIdByName} from './environment';
 
 type O<T> = Observable<T>;
+
+export type SlackBotSource = {
+    event: Observable<Event>;
+    environment: Observable<Environment>;
+}
 
 export type makeBotDriverOptions = {
     pingInterval?: number;
@@ -32,11 +37,11 @@ export type makeBotDriverOptions = {
 }
 
 export type Connection = {
-    socket: WebSocket,
-    status: AnyStatus
+    socket: WebSocket;
+    environment: Environment;
 }
 
-function send(id: number, request: Request, {socket, status}: Connection) {
+function send(id: number, request: Request, {socket, environment}: Connection) {
 
     switch (request.type) {
         case  'message-by-id':
@@ -48,7 +53,7 @@ function send(id: number, request: Request, {socket, status}: Connection) {
             }));
             return;
         case  'message-by-name':
-            const userId = findIdByName(name, status);
+            const userId = findIdByName(name, environment);
             if (userId) {
 
                 socket.send(JSON.stringify({
@@ -66,9 +71,9 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
 
     const {pingInterval = ms('10s'), pingRetryLimit = 2} = options || {};
 
-    function connectSocket(status: Response): O<Connection> {
+    function connectSocket(response: Response): O<Connection> {
         return new Observable<Connection>((observer: Subscriber<Connection>) => {
-            const socket = new WebSocket(status.url);
+            const socket = new WebSocket(response.url);
 
             const ping$: O<Timestamp<number>> = fromEvent(socket, 'open').take(1)
                 .switchMap((_) => interval(pingInterval).startWith(0))
@@ -89,7 +94,7 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
             socket
                 .on('open', () => observer.next({
                     socket,
-                    status: fromResponse(status)
+                    environment: fromResponse(response)
                 }))
                 .on('error', (error: any) => observer.error(error))
                 .on('close', () => observer.complete());
@@ -116,7 +121,7 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
             });
     }
 
-    return function botDriver(xout$: O<Request>) {
+    return function botDriver(xout$: O<Request>): SlackBotSource {
         const out$ = from(xout$);
         const params = {
             simple_latest: true,
@@ -126,10 +131,12 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
 
         const response$ = fetchSlackApi<Response>('rtm.start', params, apiParser).retryWhen(makeRetryNotifier);
 
-        const status$ = response$.switchMap(connectSocket)
-            .switchMap(({socket, status}) =>
-                (<O<string>>fromEvent(socket, 'message'))
-                    .mergeMap((jsonLikeString: string): O<Action<EventLike>> => {
+        const connection$: Observable<Connection> = response$.switchMap(connectSocket).share();
+        const socket$: Observable<WebSocket> = connection$.map(({socket}) => socket);
+        const event$: Observable<Event> = socket$
+            .switchMap((socket: WebSocket) =>
+                fromEvent(socket, 'message').map(({data}) => data)
+                    .mergeMap<string, Event>(jsonLikeString => {
                         try {
                             const event = JSON.parse(jsonLikeString);
 
@@ -137,22 +144,29 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
                                 return empty();
                             }
 
-                            return of(eventParser(event));
+                            return of(event);
                         } catch (e) {
                             return empty();
                         }
                     })
-                    .scan((state, action) => action(state), status)
-                    .map((status: AnyStatus) => ({status, socket}))).share();
+                );
+
+        const environment$: Observable<Environment> = Observable.merge<Endo<Environment>>(
+            connection$.map(({environment}) => always(environment)),
+            event$.map(makeEnvironmentAction)
+        ).scan((acc, x) => x(acc), Environment());
 
         let id = 0;
 
-        out$.withLatestFrom(status$)        //TODO subscription handling
-            .subscribe(([outgoing, conn]) => {
+        out$.withLatestFrom(event$, environment$, socket$)        //TODO subscription handling
+            .subscribe(([outgoing, _, environment, socket]) => {
                 id += 1;
-                send(id, outgoing, conn);
+                send(id, outgoing, { environment, socket });
             });
 
-        return new EventSource(status$.map(({status}) => status));
+        return {
+            event: event$,
+            environment: environment$,
+        };
     }
 }

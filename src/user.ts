@@ -3,7 +3,7 @@ import {where, is, pick} from 'ramda';
 export type User = {
     id: string;
     name: string;
-    is_bot: string;
+    is_bot: boolean;
     presence: 'active' | 'away';
 }
 
