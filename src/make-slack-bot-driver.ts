@@ -83,7 +83,7 @@ export function makeSlackBotDriver(token: string, options?: makeBotDriverOptions
             const pong$: O<Timestamp<{}>> = fromEvent(socket, 'pong')
                 .timestamp();
 
-            const pingOutput$ = ping$.mapTo(() => socket.ping(null, true, true));
+            const pingOutput$ = ping$.mapTo(() => socket.ping(null, true));
             const pongOutput$ = fromEvent(socket, 'ping').mapTo(() => socket.pong());
             const terminateOutput$ = ping$.withLatestFrom(pong$, (ping, pong) => ping.timestamp - pong.timestamp)
                 .filter(diff => diff > pingInterval * (pingRetryLimit - 0.5))
