@@ -14,13 +14,13 @@
     "ms": "^2.1.1",
     "ramda": "^0.25.0",
     "rxjs": "^5.5.7",
-    "ws": "^3.2.0"
+    "ws": "^5.1.0"
   },
   "devDependencies": {
     "@types/ms": "^0.7.30",
     "@types/node": "^9.6.0",
     "@types/ramda": "^0.25.20",
-    "@types/ws": "^3.2.0",
+    "@types/ws": "^4.0.1",
     "typescript": "^2.7.2"
   },
   "files": [
