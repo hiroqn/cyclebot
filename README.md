@@ -2,6 +2,8 @@
 
 🌀🤖
 
+[![npm version](https://badge.fury.io/js/cyclebot.svg)](https://badge.fury.io/js/cyclebot)
+
 ## How to run
 
 ```typescript
